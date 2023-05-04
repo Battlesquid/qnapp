@@ -13,14 +13,13 @@ export function IconLabel(props: IconLabelProps) {
   return (
     <View style={styles.iconLabel}>
       <Icon name={props.icon} size={20} color="#535353" />
-      <Text numberOfLines={1} variant={"labelLarge"}>{props.label}</Text>
+      <Text numberOfLines={1} variant={"light"}>{props.label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   iconLabel: {
-    flex: 1,
     flexDirection: "row",
     columnGap: 5,
     alignItems: "center"

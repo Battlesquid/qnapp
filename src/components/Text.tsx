@@ -1,3 +1,3 @@
-import { customText } from 'react-native-paper'
+import { customText } from "react-native-paper";
 
-export const Text = customText<'bold'>()
+export const Text = customText<"bold" | "light" | "appHeader">();
