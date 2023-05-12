@@ -1,14 +1,14 @@
 import { HomeProps } from "./Navigator";
 import React from "react";
 import { useMaterial3Theme } from "@pchmn/expo-material3-theme";
-import { FlatList, ListRenderItemInfo, StyleSheet, useColorScheme, View } from "react-native";
-import axios, { HttpStatusCode } from "axios/index";
+import { FlatList, StyleSheet, useColorScheme, View } from "react-native";
 import { IconLabel, Text } from "../components";
-import { Divider, FAB, TouchableRipple } from "react-native-paper";
+import { ActivityIndicator, Divider, FAB, TouchableRipple } from "react-native-paper";
 import { getAllSeasons, QuestionData, SeasonYear } from "vex-qna-archiver";
-import { Loading } from "../components/Loading";
 import { useFocusEffect } from "@react-navigation/native";
 import { monthDayYear } from "../utils/date";
+import { searchQuestions } from "../modules/qnapi";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 interface QuestionResponse {
   data: QuestionData[];
@@ -17,7 +17,7 @@ interface QuestionResponse {
 
 export function Home({ navigation, route }: HomeProps) {
   const [questions, setQuestions] = React.useState<QuestionData[]>([]);
-  const [hasNext, setHasNext] = React.useState(false);
+  const [hasNext, setHasNext] = React.useState(true);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
 
@@ -25,47 +25,38 @@ export function Home({ navigation, route }: HomeProps) {
   const [allSeasons, setAllSeasons] = React.useState<SeasonYear[]>([]);
   const { theme } = useMaterial3Theme();
   const colorScheme = useColorScheme();
-  console.log(route.params.author);
+
   const limit = 10;
-  const params = [
-    { name: "search_query", value: route.params.query },
-    { name: "author", value: route.params.author },
-    { name: "before", value: route.params.before ? monthDayYear(new Date(route.params.before)) : undefined },
-    { name: "after", value: route.params.after ? monthDayYear(new Date(route.params.after)) : undefined },
-    { name: "season", value: route.params.season }
-  ].filter(p => Boolean(p.value)).map(p => `${p.name}=${p.value}`).join("&");
 
-  const search = (append: boolean) => {
+  const search = () => {
     const promises: Promise<QuestionResponse | SeasonYear[] | void>[] = [];
+    setLoading(true);
 
-    console.log(page);
     promises.push(
-      axios.get<QuestionResponse>(`https://qnapi-production-b8f0.up.railway.app/search?${params}&limit=${limit}&page=${page}`)
-        .then(response => {
-          if (response.status === HttpStatusCode.Ok) {
-            if (append) {
-              setQuestions(old => [...old, ...response.data.data.slice(0, limit)]);
-            } else {
-              setQuestions(response.data.data.slice(0, limit));
-            }
-            setHasNext(response.data.next);
-          }
+      searchQuestions({
+        search_query: route.params.query,
+        author: route.params.author,
+        before: route.params.before ? monthDayYear(new Date(route.params.before)) : undefined,
+        after: route.params.after ? monthDayYear(new Date(route.params.after)) : undefined,
+        season: route.params.season,
+        page,
+        limit
+      })
+        .then(({ data, next }) => {
+          setQuestions(old => [...old, ...data].filter((q, i, arr) => arr.findIndex(r => q.id === r.id) === i));
+          setHasNext(next);
         })
     );
 
     if (allSeasons.length === 0) {
       promises.push(getAllSeasons()
         .then(seasons => {
-          console.log(seasons);
           setAllSeasons(seasons);
           setSelectedSeason(seasons[seasons.length - 1]);
         }));
     }
 
     Promise.all(promises)
-      .catch(() => {
-
-      })
       .finally(() => {
         setLoading(false);
       });
@@ -79,45 +70,70 @@ export function Home({ navigation, route }: HomeProps) {
         style={styles.question}
         onPress={() => navigation.navigate("Question", question)}
       >
-        <View style={styles.questionContainer}>
-          <Text numberOfLines={2} variant={"bold"}>{question.title}</Text>
-          <View style={styles.details}>
-            <IconLabel icon={"clock-time-five"} label={question.timestamp} />
-            <IconLabel icon={"account"} label={formattedAuthor} />
+        <View style={{ flexDirection: "row", alignItems: "center", columnGap: 10 }}>
+          {question.answered && <Icon name={"check-circle"} size={20} color={"#52b43a"} />}
+          <View style={styles.questionContainer}>
+            <Text numberOfLines={2} variant={"bold"}>{question.title}</Text>
+            <View style={styles.details}>
+              <IconLabel icon={"clock-time-five"} label={question.timestamp} />
+              <IconLabel icon={"account"} label={formattedAuthor} />
+            </View>
           </View>
         </View>
       </TouchableRipple>
     );
   }, []);
 
+  const renderFooter = React.useCallback(() => {
+    if (hasNext || loading) {
+      return (
+        <View style={{ padding: 5 }}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+    return (
+      <View style={{ padding: 15, justifyContent: "center", alignItems: "center" }}>
+        <Divider />
+        <Text>No more results.</Text>
+      </View>
+    );
+  }, [hasNext, loading]);
+
   React.useEffect(() => {
-    search(true);
+    search();
   }, [page]);
 
   useFocusEffect(
     React.useCallback(() => {
-      search(false);
-    }, [])
+      console.log(`checking new search: ${route.params.newSearch}`);
+      if (route.params.newSearch) {
+        setQuestions([]);
+        if (page === 1) {
+          search();
+        } else {
+          setPage(1);
+        }
+      }
+    }, [route])
   );
-
-  if (loading) {
-    return <Loading />;
-  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme[colorScheme].background }]}>
       <View style={styles.body}>
         <FlatList
-          onEndReached={() => {
-            if (hasNext) {
-              console.log("Next Page");
-              setPage(old => old + 1);
-            }
-          }}
-          ItemSeparatorComponent={Divider}
-          keyExtractor={item => item.id}
           data={questions}
           renderItem={renderRow}
+          ListFooterComponent={renderFooter}
+          ItemSeparatorComponent={Divider}
+          keyExtractor={item => item.id}
+          onEndReachedThreshold={0.1}
+          initialNumToRender={limit}
+          onEndReached={({ distanceFromEnd }) => {
+            if (hasNext && distanceFromEnd > 0 && !loading) {
+              setPage(page + 1);
+            }
+          }}
         />
       </View>
       <FAB
@@ -125,10 +141,6 @@ export function Home({ navigation, route }: HomeProps) {
         icon={"magnify"}
         customSize={64}
         onPress={() => navigation.navigate("Search", {
-          query: route.params.query,
-          season: selectedSeason,
-          before: route.params.before,
-          after: route.params.after,
           allSeasons
         })}
       />

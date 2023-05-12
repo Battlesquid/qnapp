@@ -22,6 +22,10 @@ const fontVariants = {
   },
 };
 
+if (__DEV__) {
+  import("./Reactotron").then(() => console.log("Reactotron Configured"));
+}
+
 export default function Main() {
   const colorScheme = useColorScheme();
   const { theme } = useMaterial3Theme();

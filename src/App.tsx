@@ -1,9 +1,10 @@
 import React from "react";
 import { StyleSheet } from "react-native";
-import { Question } from "vex-qna-archiver/dist/entities/Question";
+import { QuestionData } from "vex-qna-archiver";
+
 
 interface QuestionResponse {
-  data: Question[];
+  data: QuestionData[];
   next: boolean;
 }
 

@@ -1,27 +1,38 @@
 import { SearchProps } from "./Navigator";
 import React from "react";
-import { StyleSheet, useColorScheme, View } from "react-native";
+import { StyleSheet, TextInput as RNTextInput, useColorScheme, View } from "react-native";
 import { Button, Divider, Menu, RadioButton, TextInput, TouchableRipple } from "react-native-paper";
 import { useMaterial3Theme } from "@pchmn/expo-material3-theme";
 import { DatePickerModal } from "react-native-paper-dates";
 import { monthDayYear } from "../utils/date";
 import { Text } from "../components";
 import { SeasonYear } from "vex-qna-archiver";
+import { useFocusEffect } from "@react-navigation/native";
 
 export function Search({ navigation, route }: SearchProps) {
   const [beforeVisible, setBeforeVisible] = React.useState(false);
   const [afterVisible, setAfterVisible] = React.useState(false);
   const [seasonVisible, setSeasonVisible] = React.useState(false);
 
-  const [before, setBefore] = React.useState<Date | undefined>(route.params.before ? new Date(route.params.before) : undefined);
-  const [after, setAfter] = React.useState<Date | undefined>(route.params.after ? new Date(route.params.after) : undefined);
-  const [query, setQuery] = React.useState(route.params.query);
-  const [author, setAuthor] = React.useState(route.params.author);
-  const [selectedSeason, setSelectedSeason] = React.useState<SeasonYear>(route.params.season);
+  const [before, setBefore] = React.useState<Date | undefined>(undefined);
+  const [after, setAfter] = React.useState<Date | undefined>(undefined);
+  const [query, setQuery] = React.useState("");
+  const [author, setAuthor] = React.useState("");
+  const [selectedSeason, setSelectedSeason] = React.useState<SeasonYear>(route.params.allSeasons[route.params.allSeasons.length - 1]);
 
   const { theme } = useMaterial3Theme();
   const colorScheme = useColorScheme();
 
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setAfter(undefined);
+      setBefore(undefined);
+      setAuthor("");
+      setQuery("");
+      setSelectedSeason(route.params.allSeasons[route.params.allSeasons.length - 1]);
+    }, [])
+  );
   return (
     <View style={[styles.container, { backgroundColor: theme[colorScheme].background }]}>
       <View style={styles.body}>
@@ -111,7 +122,8 @@ export function Search({ navigation, route }: SearchProps) {
                 author,
                 before: before ? before.getTime() : undefined,
                 after: after ? after.getTime() : undefined,
-                season: selectedSeason
+                season: selectedSeason,
+                newSearch: true
               });
             }}
           >Search</Button>

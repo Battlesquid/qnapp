@@ -9,7 +9,9 @@ import { Text } from "../components";
 import { QuestionData, SeasonYear } from "vex-qna-archiver";
 import { SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
 import { IconButton } from "react-native-paper";
+import { startBackgroundService } from "../modules/background";
 
+startBackgroundService();
 export type RootStackParamList = {
   Home: {
     before?: number;
@@ -17,14 +19,10 @@ export type RootStackParamList = {
     query?: string
     author?: string;
     season?: SeasonYear;
+    newSearch: boolean;
   };
   Search: {
-    before?: number;
-    after?: number;
-    query?: string
-    author?: string;
-    season: SeasonYear;
-    allSeasons?: string[];
+    allSeasons: SeasonYear[];
   };
   Notifications: undefined;
   Question: QuestionData;
@@ -55,21 +53,27 @@ export function Navigator() {
               <View style={styles.header} {...props}>
                 <View style={styles.headerLeft}>
                   {props.navigation.canGoBack() && (
-                    <IconButton iconColor={"#FFFFFF"} icon={"arrow-left"} size={28}
-                                onPress={() => props.navigation.goBack()} />
+                    <IconButton
+                      iconColor={"#FFFFFF"}
+                      icon={"arrow-left"}
+                      size={28}
+                      onPress={() => props.navigation.navigate("Home", {
+                        newSearch: false
+                      })} />
                   )}
                   <Text
-                    style={{ paddingHorizontal: props.navigation.canGoBack() ? 0 : 10 }}
+                    style={{ color: "#FFFFFF", paddingHorizontal: props.navigation.canGoBack() ? 0 : 10 }}
                     variant={"appHeader"}>
                     {props.route.name}
                   </Text>
                 </View>
-                {props.route.name === "Home" && (
-                  <View>
-                    <IconButton iconColor={"#FFFFFF"} icon={"bell"} size={24} onPress={() => {
-                    }} />
-                  </View>
-                )}
+                {/*{props.route.name === "Home" && (*/}
+                {/*  <View>*/}
+                {/*    <IconButton iconColor={"#FFFFFF"} icon={"bell"} size={24} onPress={() => {*/}
+                {/*      props.navigation.navigate("Notifications");*/}
+                {/*    }} />*/}
+                {/*  </View>*/}
+                {/*)}*/}
               </View>
             </View>
           )
@@ -86,7 +90,7 @@ export function Navigator() {
           }}
         />
         <Stack.Screen name={"Search"} component={Search} />
-        <Stack.Screen name={"Notifications"} component={Notifications} />
+        {/*<Stack.Screen name={"Notifications"} component={Notifications} />*/}
         <Stack.Screen name={"Question"} component={Question} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     columnGap: 5,
-    paddingVertical: 4,
+    paddingVertical: 8,
     backgroundColor: "#D22630"
   },
   headerLeft: {
