@@ -26,7 +26,6 @@ export const searchQuestions = async (params: SearchQuestionParams) => {
     }
   }
   const url = `${API_BASE}/search?${validParams.join("&")}`;
-  console.log(url);
   const response = await axios.get<QuestionResponse>(url);
   if (response.status === HttpStatusCode.Ok) {
     return { ...response.data, data: response.data.data.slice(0, params.limit) };

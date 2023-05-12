@@ -38,7 +38,7 @@ export function Question({ navigation, route }: QuestionProps) {
         const stored: SubscribedQuestion = JSON.parse(result);
         if (stored[id] !== undefined) {
           setIsSubscribed(stored[id].fulfilled);
-          setFulfilled(stored[id].fulfilled)
+          setFulfilled(stored[id].fulfilled);
         }
       })
       .finally(() => setLoading(false));
@@ -55,7 +55,7 @@ export function Question({ navigation, route }: QuestionProps) {
   return (
     <View style={[styles.container, { backgroundColor: theme[colorScheme].background }]}>
       <View style={{ flexDirection: "row" }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, rowGap: 10 }}>
           <View style={styles.title}>
             {answered && <Icon name={"check-circle"} size={20} color={"#52b43a"} />}
             <Text style={{ flex: 1 }} variant={"bold"}>{title}</Text>
@@ -72,7 +72,7 @@ export function Question({ navigation, route }: QuestionProps) {
             onPress={() => Linking.openURL(url)}
           />
           <IconButton
-            icon={subscribed ? "bell" : "bell-outline"}
+            icon={subscribed && !fulfilled ? "bell" : "bell-outline"}
             size={24}
             disabled={answered}
             onPress={async () => {

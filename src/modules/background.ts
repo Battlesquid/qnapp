@@ -26,10 +26,8 @@ export type SubscribedQuestion = {
 
 export const startBackgroundService = () => {
   BackgroundService.start(async () => {
-    console.log("Background Service started.");
     await notifee.requestPermission();
     while (BackgroundService.isRunning()) {
-      console.log("Checking subscriptions");
       try {
         const data = await AsyncStorage.getItem("@qnapp/subscribed");
         if (data !== null) {
@@ -42,7 +40,6 @@ export const startBackgroundService = () => {
             const q = await getQuestion(id);
 
             if (q !== null && q.answered) {
-              console.log("New response detected");
               stored[id].fulfilled = true;
               answered.push(id);
             }

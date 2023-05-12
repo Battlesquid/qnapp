@@ -49,11 +49,7 @@ export function Home({ navigation, route }: HomeProps) {
     );
 
     if (allSeasons.length === 0) {
-      promises.push(getAllSeasons()
-        .then(seasons => {
-          setAllSeasons(seasons);
-          setSelectedSeason(seasons[seasons.length - 1]);
-        }));
+      promises.push(getAllSeasons().then(setAllSeasons));
     }
 
     Promise.all(promises)
@@ -106,7 +102,6 @@ export function Home({ navigation, route }: HomeProps) {
 
   useFocusEffect(
     React.useCallback(() => {
-      console.log(`checking new search: ${route.params.newSearch}`);
       if (route.params.newSearch) {
         setQuestions([]);
         if (page === 1) {
